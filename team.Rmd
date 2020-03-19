@@ -1,0 +1,20 @@
+---
+title: "ds202_lab4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Libraries
+library(readxl)
+library(tidyr)
+
+# Create dataframes
+defense = read_excel('cyclonesFootball2019.xlsx', sheet='Defensive')
+offense = read_excel('cyclonesFootball2019.xlsx', sheet='Offensive')
+bio = read_excel('cyclonesFootball2019.xlsx', sheet='Biography')
+```
+
