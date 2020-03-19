@@ -1,0 +1,19 @@
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readxl)
+
+defense = read_excel('cyclonesFootball2019.xlsx', sheet='Defensive')
+```
+
+---
+title: Team Work file
+author: Aaron Jencks, Eli Musgrove
+date: 3/19/2020
+output: html_document
+---
+
+```{r}
+head(defense)
+```
