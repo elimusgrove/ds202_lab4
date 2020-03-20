@@ -1,5 +1,6 @@
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -18,14 +19,58 @@ output: html_document
 ---
 
 ```{r}
-head(defense)
+str(defense)
+str(offense)
+str(bio)
 ```
 
 ## Part 1: Cleaning
 
 1. The player names and opponent names are factors
+
+	```{r}
+	total_names_list = unique(c(defense$Name, offense$Name, bio$Name))
+	defense$Name = factor(defense$Name, levels=total_names_list)
+	offense$Name = factor(offense$Name, levels=total_names_list)
+	bio$Name = factor(bio$Name, levels=total_names_list)
+
+	total_opponent_names_list = unique(c(defense$Opponent_Opponent, offense$Opponent_Opponent))
+	defense$Opponent_Opponent = factor(defense$Opponent_Opponent, levels=total_opponent_names_list)
+	offense$Opponent_Opponent = factor(offense$Opponent_Opponent, levels=total_opponent_names_list)
+	```
+
 2. All offensive and defensive statistics are numerical. The Weight column in biography is also numeric.
+
+	```{r}
+	defense = defense %>% mutate_at(colnames(defense)[2:10], as.numeric)
+	offense = offense %>% mutate_at(colnames(offense)[2:11], as.numeric)
+	bio$Weight = as.numeric(bio$Weight)
+	```
+
 3. Change the Height column in biography into numeric.
+
+	```{r}
+	bio = bio %>% mutate(height_feet = (function(element) {
+
+					# You'll need the stringr package for these methods, 
+					# they are used to splice the feet and inches parts of the Height
+					index = (element %>% str_locate("-"))[,1]
+					result = as.numeric(element %>% str_sub(rep(1, length(index)), index - 1))
+					return(result)
+
+				})(Height),
+
+			     height_inches = (function(elements) {
+
+					# Converts feet into inches, and then adds the inches
+					index = (elements %>% str_locate("-"))[,1]
+					feet = as.numeric(elements %>% str_sub(1, index - 1)) * 12
+					inches = as.numeric(elements %>% str_sub(index + 1, rep(length(elements), length(elements))))
+					result = feet + inches
+					return(result)
+
+				})(Height))
+	```
 
 ## Part 2: Tidying
 
