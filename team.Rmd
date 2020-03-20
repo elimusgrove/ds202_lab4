@@ -60,7 +60,7 @@ str(bio)
 
 				})(Height),
 
-			     height_inches = (function(elements) {
+			     Height = (function(elements) {
 
 					# Converts feet into inches, and then adds the inches
 					index = (elements %>% str_locate("-"))[,1]
