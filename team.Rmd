@@ -20,3 +20,29 @@ output: html_document
 ```{r}
 head(defense)
 ```
+
+## Part 1: Cleaning
+
+1. The player names and opponent names are factors
+2. All offensive and defensive statistics are numerical. The Weight column in biography is also numeric.
+3. Change the Height column in biography into numeric.
+
+## Part 2: Tidying
+
+### Part 1
+
+1. Reformat the defClean data frame into tidy format using `pivot_longer`. The type of statistic (Tackles_Solo, Tackles_ASST, etc) is added as a new key column named Statistic.
+2. Create a histogram for each defensive statistic. Use `facet_wrap` to draw all histograms in a single plot. What defensive skills are rare?
+3. Did ISU have better defense against West Virginia or Kansas State? Answer this question by creating a scatterplot with x-axis being the number of solo tackles against West Virginia, and y-axis being that against Kansas State. A large number of solor tackles indicates a good defense.
+
+### Part 2
+
+1. Separate the Hometown column into two columns, namely the city and the state. Print he first few rows of these two columns.
+2. How many players are there from each state?
+
+## Part 3: Joining data frames
+
+1. Find where do the offensive players come from by joining the offensive data and player biography data appropriately.
+2. Is there a relationship between the weight of a player and the receiving yarsd (`Receiving_YDS`)?
+3. How do the performance of quarterback Brock Purdy relate tot he performance fo the ISU team?
+4. Explore more. You may in addition explore the 2018 data (see slides). Raise a question that can be answered only by looking at two or more data frames. Then answer that question.
