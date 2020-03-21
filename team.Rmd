@@ -90,6 +90,19 @@ str(bio)
 ## Part 3: Joining data frames
 
 1. Find where do the offensive players come from by joining the offensive data and player biography data appropriately.
+
+	```{r}
+
+	hometowns = full_join(offense, bio, by="Name") %>% select(Name, Hometown) %>% distinct()
+	head(hometowns)
+
+	```
+
 2. Is there a relationship between the weight of a player and the receiving yarsd (`Receiving_YDS`)?
-3. How do the performance of quarterback Brock Purdy relate tot he performance fo the ISU team?
+
+	```{r}
+
+	```
+
+3. How do the performance of quarterback Brock Purdy relate to the performance fo the ISU team?
 4. Explore more. You may in addition explore the 2018 data (see slides). Raise a question that can be answered only by looking at two or more data frames. Then answer that question.
