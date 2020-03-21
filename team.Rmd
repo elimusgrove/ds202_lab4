@@ -11,10 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 # Libraries
 library(readxl)
 library(tidyr)
+library(dplyr)
 
 # Create dataframes
 defense = read_excel('cyclonesFootball2019.xlsx', sheet='Defensive')
 offense = read_excel('cyclonesFootball2019.xlsx', sheet='Offensive')
 bio = read_excel('cyclonesFootball2019.xlsx', sheet='Biography')
 ```
-
