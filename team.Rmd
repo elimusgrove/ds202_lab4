@@ -1,5 +1,6 @@
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(stringr)
 library(dplyr)
 library(tidyr)
@@ -10,8 +11,6 @@ defense = read_excel('cyclonesFootball2019.xlsx', sheet='Defensive')
 offense = read_excel('cyclonesFootball2019.xlsx', sheet='Offensive')
 bio = read_excel('cyclonesFootball2019.xlsx', sheet='Biography')
 ```
-<<<<<<< HEAD
-=======
 
 ---
 title: Team Work file
@@ -20,72 +19,115 @@ date: 3/19/2020
 output: html_document
 ---
 
-```{r}
-str(defense)
-str(offense)
-str(bio)
-```
-
 ## Part 1: Cleaning
 
 1. The player names and opponent names are factors
 
-	```{r}
-	total_names_list = unique(c(defense$Name, offense$Name, bio$Name))
-	defense$Name = factor(defense$Name, levels=total_names_list)
-	offense$Name = factor(offense$Name, levels=total_names_list)
-	bio$Name = factor(bio$Name, levels=total_names_list)
+```{r}
+# Create new dataframes to be cleand
+defClean = data.frame(defense)
+offClean = data.frame(offense)
+bioClean = data.frame(bio)
 
-	total_opponent_names_list = unique(c(defense$Opponent_Opponent, offense$Opponent_Opponent))
-	defense$Opponent_Opponent = factor(defense$Opponent_Opponent, levels=total_opponent_names_list)
-	offense$Opponent_Opponent = factor(offense$Opponent_Opponent, levels=total_opponent_names_list)
-	```
+# Factorize player names
+total_names_list = unique(c(defense$Name, offense$Name, bio$Name))
+defClean$Name = factor(defense$Name, levels=total_names_list)
+offClean$Name = factor(offense$Name, levels=total_names_list)
+bioClean$Name = factor(bio$Name, levels=total_names_list)
+
+# Factorize opponent names
+total_opponent_names_list = unique(c(defense$Opponent_Opponent, offense$Opponent_Opponent))
+defClean$Opponent_Opponent = factor(defense$Opponent_Opponent, levels=total_opponent_names_list)
+offClean$Opponent_Opponent = factor(offense$Opponent_Opponent, levels=total_opponent_names_list)
+```
 
 2. All offensive and defensive statistics are numerical. The Weight column in biography is also numeric.
 
-	```{r}
-	defense = defense %>% mutate_at(colnames(defense)[2:10], as.numeric)
-	offense = offense %>% mutate_at(colnames(offense)[2:11], as.numeric)
-	bio$Weight = as.numeric(bio$Weight)
-	```
+```{r}
+defClean = defClean %>% mutate_at(colnames(defClean)[3:11], as.numeric)
+offClean = offClean %>% mutate_at(colnames(offClean)[3:12], as.numeric)
+bioClean$Weight = as.numeric(bioClean$Weight)
+```
 
 3. Change the Height column in biography into numeric.
 
-	```{r}
-	bio = bio %>% mutate(height_feet = (function(element) {
+```{r}
+bioClean = bioClean %>% mutate(height_feet = (function(element) {
+  
+  # You'll need the stringr package for these methods, 
+  # they are used to splice the feet and inches parts of the Height
+  index = (element %>% str_locate("-"))[,1]
+  result = as.numeric(element %>% str_sub(rep(1, length(index)), index - 1))
+  return(result)
 
-					# You'll need the stringr package for these methods, 
-					# they are used to splice the feet and inches parts of the Height
-					index = (element %>% str_locate("-"))[,1]
-					result = as.numeric(element %>% str_sub(rep(1, length(index)), index - 1))
-					return(result)
+})(Height),
 
-				})(Height),
+Height = (function(elements) {
 
-			     Height = (function(elements) {
+  # Converts feet into inches, and then adds the inches
+  index = (elements %>% str_locate("-"))[,1]
+	feet = as.numeric(elements %>% str_sub(1, index - 1)) * 12
+	inches = as.numeric(elements %>% str_sub(index + 1, rep(length(elements), length(elements))))
+	result = feet + inches
+	return(result)
 
-					# Converts feet into inches, and then adds the inches
-					index = (elements %>% str_locate("-"))[,1]
-					feet = as.numeric(elements %>% str_sub(1, index - 1)) * 12
-					inches = as.numeric(elements %>% str_sub(index + 1, rep(length(elements), length(elements))))
-					result = feet + inches
-					return(result)
+})(Height))
+```
 
-				})(Height))
-	```
+
+```{r}
+# Final clean dataframes
+str(defClean)
+str(offClean)
+str(bioClean)
+```
 
 ## Part 2: Tidying
 
 ### Part 1
 
 1. Reformat the defClean data frame into tidy format using `pivot_longer`. The type of statistic (Tackles_Solo, Tackles_ASST, etc) is added as a new key column named Statistic.
+
+```{r}
+defClean = defClean %>%
+  pivot_longer(Tackles_Solo:Pass_PB, names_to='Statistic', values_to='Value')
+```
+
 2. Create a histogram for each defensive statistic. Use `facet_wrap` to draw all histograms in a single plot. What defensive skills are rare?
-3. Did ISU have better defense against West Virginia or Kansas State? Answer this question by creating a scatterplot with x-axis being the number of solo tackles against West Virginia, and y-axis being that against Kansas State. A large number of solor tackles indicates a good defense.
+
+##### The defensive skills 'Turnover_FF', 'Turnover_FR', and 'Turnover_INT' are rare with most values close to 0. This is because turnovers are pretty rare in the course of a game while tackling would occur more often.
+
+```{r}
+ggplot(defClean, aes(x=Value)) + geom_histogram() + facet_wrap(~Statistic) + stat_bin(bins=10)
+```
+
+3. Did ISU have better defense against West Virginia or Kansas State? Answer this question by creating a scatterplot with x-axis being the number of solo tackles against West Virginia, and y-axis being that against Kansas State. A large number of solo tackles indicates a good defense.
+
+##### The data doesn't point to a strong conclusion- a large number of players had 0 tackles against either opponent, but there are a few outliers that skew the regression line to have a smaller slope. Although the regression line doesn't indicate a strong conclusion, it shows there is a slight favor of Iowa State's defense towards being stronger against West Virginia. If there were more data points a stronger conclusion could be drawn, but not enough tackles can be made in the given sample to have a strong definitive conclusion.
+```{r}
+# Prep dataframe
+defComp = defClean %>% filter(Statistic == 'Tackles_Solo') %>% filter(Opponent_Opponent %in% c('West Virginia', 'Kansas State')) %>%       pivot_wider(names_from=Opponent_Opponent, values_from=Value)
+
+colnames(defComp) = c('Name', 'Statistic', 'West_Virginia', 'Kansas_State')
+ggplot(defComp, aes(x=West_Virginia, y=Kansas_State)) + geom_smooth(method='lm') + geom_point(position='jitter') + ggtitle('Iowa State University Solo Tackles')
+```
 
 ### Part 2
 
-1. Separate the Hometown column into two columns, namely the city and the state. Print he first few rows of these two columns.
+1. Separate the Hometown column into two columns, namely the city and the state. Print the first few rows of these two columns.
+
+```{r}
+bioClean = bioClean %>% separate(Hometown, c('City', 'State'), sep=',')
+head(bioClean['City'])
+head(bioClean['State'])
+```
+
 2. How many players are there from each state?
+
+```{r}
+fromStates = bioClean %>% group_by(State) %>% tally()
+print(fromStates, n=Inf)
+```
 
 ## Part 3: Joining data frames
 
