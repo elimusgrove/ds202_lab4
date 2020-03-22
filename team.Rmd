@@ -117,7 +117,7 @@ ggplot(defComp, aes(x=West_Virginia, y=Kansas_State)) + geom_smooth(method='lm')
 1. Separate the Hometown column into two columns, namely the city and the state. Print the first few rows of these two columns.
 
 ```{r}
-bioClean = bioClean %>% separate(Hometown, c('City', 'State'), sep=',')
+bioClean = bioClean %>% separate(Hometown, c('City', 'State'), sep=',', remove=FALSE)
 head(bioClean['City'])
 head(bioClean['State'])
 ```
@@ -131,33 +131,56 @@ print(fromStates, n=Inf)
 
 ## Part 3: Joining data frames
 
-1. Find where do the offensive players come from by joining the offensive data and player biography data appropriately.
+1. Find where the offensive players come from by joining the offensive data and player biography data appropriately.
 
-	```{r}
+```{r}
+# Use full_join, only because it wasn't specified to get rid of N/A values
+hometowns = full_join(offClean, bioClean, by="Name") %>% select(Name, Hometown) %>% distinct()
+head(hometowns)
+```
 
-	# Use full_join, only because it wasn't specified to get rid of N/A values
-	hometowns = full_join(offense, bio, by="Name") %>% select(Name, Hometown) %>% distinct()
-	head(hometowns)
+2. Is there a relationship between the weight of a player and the receiving yards (`Receiving_YDS`)?
 
-	```
+##### There is a small linear correlation between the `Weight` and the `mean_yds`. The black points are the raw data, and the colored points are the average. If you don't assume that the least weighing student is an outliar, then there is a small exponential relationship, with the valley right around 175.
 
-2. Is there a relationship between the weight of a player and the receiving yarsd (`Receiving_YDS`)?
+```{r}
+# Use inner_join this time, because we aren't interested in N/A values
+weight_yards = inner_join(bioClean, offClean, by="Name") %>% 
+	       select(Name, Weight, Receiving_YDS) %>% 
+	       group_by(Name) %>% 
+	       mutate(mean_yds = mean(Receiving_YDS))
 
-	```{r}
+ggplot(distinct(weight_yards, Name, .keep_all=TRUE), aes(x=Weight, y=mean_yds, color=Name)) + ylab("Receiving Yards") +
+	geom_point(data=weight_yards, aes(x=Weight, y=Receiving_YDS), show.legend=FALSE, inherit.aes=FALSE) + 
+	geom_point(size=3)
+```
 
-	# Use inner_join this time, because we aren't interested in N/A values
-	weight_yards = inner_join(bio, offense, by="Name") %>% 
-		       select(Name, Weight, Receiving_YDS) %>% 
-		       group_by(Name) %>% 
-		       mutate(mean_yds = mean(Receiving_YDS))
+3. How does the performance of quarterback Brock Purdy relate to the performance for the ISU team?
 
-	ggplot(distinct(weight_yards, Name, .keep_all=TRUE), aes(x=Weight, y=mean_yds, color=Name)) + ylab("Receiving Yards") +
-		geom_point(data=weight_yards, aes(x=Weight, y=Receiving_YDS), show.legend=FALSE, inherit.aes=FALSE) + 
-		geom_point(size=3)
+##### As a quarterback, Brock's performance should be compared to the other offensive players. One of the most important statistics for quarterbacks is the passing yards. Compared to the other players with non-null passing yards, Brock is far superior in comparision.
 
-	```
+```{r}
+# Join bio and offensive tables and select passing_yds
+perf = full_join(bioClean, offClean, by='Name') %>% group_by(Name) %>% select(Name, Passing_YDS)
+perf = na.omit(perf)
 
-	There is a small linear correlation between the `Weight` and the `mean_yds`. The black points are the raw data, and the colored points are the average. If you don't assume that the least weighing student is an outliar, then there is a small exponential relationship, with the valley right around 175.
+ggplot(perf, aes(y=Passing_YDS)) + geom_boxplot() + facet_wrap(~Name)
+```
 
-3. How do the performance of quarterback Brock Purdy relate to the performance fo the ISU team?
 4. Explore more. You may in addition explore the 2018 data (see slides). Raise a question that can be answered only by looking at two or more data frames. Then answer that question.
+
+##### Question: Among the offensive players, which state produced the most players? Which states produce the most defensive players?
+
+##### The states Florida and Oklahoma are tied with 2 players from each state. Since offensive positions are very important, coaches are more likely to look outside of Iowa to draft the best talent they can find.
+
+```{r}
+offPlay = inner_join(bioClean, offClean, by='Name') %>% group_by(State) %>% distinct(Name) %>% tally(sort=TRUE)
+head(offPlay, 3)
+```
+
+##### Iowa produced the most defensive players. These positions are the least likely to have money spent to recruit outside the state for. It also seems like there are a lot of players overall that come from Florida to play in Iowa since there are 6 overall players between offensive and defensive from Florida.
+
+```{r}
+defPlay = inner_join(bioClean, defClean, by='Name') %>% group_by(State) %>% distinct(Name) %>% tally(sort=TRUE)
+head(defPlay, 2)
+```
